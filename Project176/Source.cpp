@@ -33,21 +33,21 @@ BOOL WINAPI _enumerateResources(LPNETRESOURCE lpnr, FILE *errlog, DWORD dwNestin
 	LPNETRESOURCE lpnrLocal;
 	DWORD i;
 
-	// Вызов функции WNetOpenEnum для начала перечисления компьютеров. 
+	// Р’С‹Р·РѕРІ С„СѓРЅРєС†РёРё WNetOpenEnum РґР»СЏ РЅР°С‡Р°Р»Р° РїРµСЂРµС‡РёСЃР»РµРЅРёСЏ РєРѕРјРїСЊСЋС‚РµСЂРѕРІ. 
 	dwResult = WNetOpenEnum(RESOURCE_GLOBALNET, RESOURCETYPE_ANY, 0, lpnr, &hEnum);
-	// RESOURCES_GLOBALNET - все сетевые ресурсы
-	// RESOURCETYPE_ANY - все типы ресурсов
-	// 0 - перечислить все ресурсы
-	// lpnrLocal = NULL при первом вызове функции
-	// hEnum - дескриптор ресурса
+	// RESOURCES_GLOBALNET - РІСЃРµ СЃРµС‚РµРІС‹Рµ СЂРµСЃСѓСЂСЃС‹
+	// RESOURCETYPE_ANY - РІСЃРµ С‚РёРїС‹ СЂРµСЃСѓСЂСЃРѕРІ
+	// 0 - РїРµСЂРµС‡РёСЃР»РёС‚СЊ РІСЃРµ СЂРµСЃСѓСЂСЃС‹
+	// lpnrLocal = NULL РїСЂРё РїРµСЂРІРѕРј РІС‹Р·РѕРІРµ С„СѓРЅРєС†РёРё
+	// hEnum - РґРµСЃРєСЂРёРїС‚РѕСЂ СЂРµСЃСѓСЂСЃР°
 
 	if (dwResult != NO_ERROR) {
-		// Обработка ошибок
+		// РћР±СЂР°Р±РѕС‚РєР° РѕС€РёР±РѕРє
 		PrintErrorCode(errlog, "WNetOpenEnum failed with error %d\n", dwResult);
 		return FALSE;
 	}
 
-	// Вызвов функции GlobalAlloc для выделения ресурсов.
+	// Р’С‹Р·РІРѕРІ С„СѓРЅРєС†РёРё GlobalAlloc РґР»СЏ РІС‹РґРµР»РµРЅРёСЏ СЂРµСЃСѓСЂСЃРѕРІ.
 	lpnrLocal = (LPNETRESOURCE)GlobalAlloc(GPTR, cbBuffer);
 	if (lpnrLocal == NULL) {
 		PrintErrorCode(errlog, "WNetOpenEnum failed with error %d\n", dwResult);
@@ -55,17 +55,17 @@ BOOL WINAPI _enumerateResources(LPNETRESOURCE lpnr, FILE *errlog, DWORD dwNestin
 	}
 
 	do {
-		// Инициализируем буфер.
+		// РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј Р±СѓС„РµСЂ.
 		ZeroMemory(lpnrLocal, cbBuffer);
 
-		// Вызов функции WNetEnumResource для продолжения перечисления
-		// доступных ресурсов сети.
+		// Р’С‹Р·РѕРІ С„СѓРЅРєС†РёРё WNetEnumResource РґР»СЏ РїСЂРѕРґРѕР»Р¶РµРЅРёСЏ РїРµСЂРµС‡РёСЃР»РµРЅРёСЏ
+		// РґРѕСЃС‚СѓРїРЅС‹С… СЂРµСЃСѓСЂСЃРѕРІ СЃРµС‚Рё.
 		dwResultEnum = WNetEnumResource(hEnum, &cEntries, lpnrLocal, &cbBuffer);
 		
-		// Если вызов был успешен, то структу ры обрабатываются циклом.
+		// Р•СЃР»Рё РІС‹Р·РѕРІ Р±С‹Р» СѓСЃРїРµС€РµРЅ, С‚Рѕ СЃС‚СЂСѓРєС‚Сѓ СЂС‹ РѕР±СЂР°Р±Р°С‚С‹РІР°СЋС‚СЃСЏ С†РёРєР»РѕРј.
 		if (dwResultEnum == NO_ERROR) {
 			for (i = 0; i < cEntries; i++) {
-				// Функция для отображения содержимого структур NetResources
+				// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СЃРѕРґРµСЂР¶РёРјРѕРіРѕ СЃС‚СЂСѓРєС‚СѓСЂ NetResources
 				ShowResource(dwNesting, &lpnrLocal[i]);
 				if (RESOURCEUSAGE_CONTAINER == (lpnrLocal[i].dwUsage & RESOURCEUSAGE_CONTAINER)) {
 					if (!_enumerateResources(&lpnrLocal[i], errlog, dwNesting + 1)) {
@@ -74,17 +74,17 @@ BOOL WINAPI _enumerateResources(LPNETRESOURCE lpnr, FILE *errlog, DWORD dwNestin
 				}
 			}
 		}
-		// Обработка ошибок
+		// РћР±СЂР°Р±РѕС‚РєР° РѕС€РёР±РѕРє
 		else if (dwResultEnum != ERROR_NO_MORE_ITEMS) {
 			PrintErrorCode(errlog, "WNetEnumResource failed with error %d\n", dwResultEnum);
 			break;
 		}
 	} while (dwResultEnum != ERROR_NO_MORE_ITEMS);
 
-	// Вызов функции GlobalFree для очистки ресурсов
+	// Р’С‹Р·РѕРІ С„СѓРЅРєС†РёРё GlobalFree РґР»СЏ РѕС‡РёСЃС‚РєРё СЂРµСЃСѓСЂСЃРѕРІ
 	GlobalFree((HGLOBAL)lpnrLocal);
 
-	// Вызов WNetCloseEnum для остановки перечисления
+	// Р’С‹Р·РѕРІ WNetCloseEnum РґР»СЏ РѕСЃС‚Р°РЅРѕРІРєРё РїРµСЂРµС‡РёСЃР»РµРЅРёСЏ
 	dwResult = WNetCloseEnum(hEnum);
 
 	if (dwResult != NO_ERROR) {
